@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genome Nexus — Annotation Logic Reference</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;color:#1e293b;background:#f8fafc}
+header{background:#1e3a5f;color:#fff;padding:16px 24px}
+header h1{font-size:20px;font-weight:700}
+header p{font-size:12px;opacity:.75;margin-top:3px}
+nav.tabs{display:flex;background:#fff;border-bottom:2px solid #e2e8f0;padding:0 24px}
+nav.tabs button{padding:12px 20px;border:none;background:none;cursor:pointer;font-size:14px;color:#64748b;border-bottom:3px solid transparent;margin-bottom:-2px;font-weight:500;transition:all .15s}
+nav.tabs button.active{color:#1e3a5f;border-bottom-color:#1e3a5f}
+nav.tabs button:hover:not(.active){background:#f1f5f9;color:#334155}
+.tab-content{display:none;padding:24px}
+.tab-content.active{display:block}
+/* stats */
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.stat{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;min-width:110px}
+.stat-val{font-size:24px;font-weight:700;color:#1e3a5f}
+.stat-lbl{font-size:11px;color:#64748b;margin-top:2px}
+/* controls */
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.controls input[type=search]{padding:7px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;width:250px;outline:none}
+.controls input[type=search]:focus{border-color:#1e3a5f;box-shadow:0 0 0 2px rgba(30,58,95,.15)}
+.controls select{padding:7px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;background:#fff;cursor:pointer}
+.controls label{display:flex;align-items:center;gap:5px;font-size:13px;color:#475569;cursor:pointer}
+/* table */
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e2e8f0;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#1e3a5f;color:#fff;padding:9px 14px;text-align:left;font-weight:600;white-space:nowrap;cursor:pointer;user-select:none}
+thead th:hover{background:#2d527a}
+thead th.sort-asc::after{content:" ↑"}
+thead th.sort-desc::after{content:" ↓"}
+tbody tr{border-bottom:1px solid #f1f5f9}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{filter:brightness(.97)}
+tbody td{padding:8px 14px;vertical-align:middle}
+.term{font-family:'JetBrains Mono','Fira Code',Consolas,monospace;font-size:12px}
+.pbadge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-weight:700;font-size:12px;color:#fff}
+.bbadge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.vcbadge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:600}
+.splice-mark{display:inline-block;padding:2px 8px;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:4px;font-size:11px;font-weight:700}
+/* priority colors */
+.p1{background:#7f1d1d}.p2{background:#991b1b}.p3{background:#9a3412}.p4{background:#c2410c}.p5{background:#d97706}.p6{background:#ca8a04}.p7{background:#4d7c0f}.p8{background:#15803d}.p9{background:#0f766e}.p10{background:#0e7490}.p11{background:#1d4ed8}.p12{background:#4338ca}.p13{background:#6d28d9}.p14{background:#7c3aed}.p15{background:#9333ea}.p16{background:#a21caf}.p17{background:#be185d}.p18{background:#9f1239}.p19{background:#475569}.p20{background:#64748b}.p21{background:#94a3b8}.pn{background:#cbd5e1;color:#1e293b!important}
+/* band colors */
+.bHigh{background:#fee2e2;color:#991b1b}.bModerate{background:#fed7aa;color:#7c2d12}.bLow{background:#fef3c7;color:#78350f}.bModifier{background:#dbeafe;color:#1e40af}.bLegacy{background:#f3e8ff;color:#6b21a8}
+/* row bg */
+.rHigh{background:#fff5f5}.rModerate{background:#fffaf5}.rLow{background:#fffdf0}.rModifier{background:#f8fcff}.rLegacy{background:#fdf8ff}
+/* variant classification badge colors */
+.vcSplice_Site{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.vcNonsense_Mutation{background:#fecaca;color:#7f1d1d;border:1px solid #f87171}
+.vcFrame_Shift,.vcFrame_Shift_conditional{background:#fed7aa;color:#7c2d12;border:1px solid #fdba74}
+.vcFrame_Shift_Del{background:#fed7aa;color:#7c2d12;border:1px solid #fdba74}
+.vcFrame_Shift_Ins{background:#fde68a;color:#78350f;border:1px solid #fcd34d}
+.vcNonstop_Mutation{background:#fef3c7;color:#78350f;border:1px solid #fde68a}
+.vcTranslation_Start_Site{background:#fef9c3;color:#713f12;border:1px solid #fde047}
+.vcIn_Frame_Ins{background:#d9f99d;color:#365314;border:1px solid #a3e635}
+.vcIn_Frame_Del{background:#bbf7d0;color:#14532d;border:1px solid #4ade80}
+.vcMissense_Mutation,.vcMissense_conditional{background:#dcfce7;color:#14532d;border:1px solid #86efac}
+.vcSplice_Region{background:#fce7f3;color:#831843;border:1px solid #f9a8d4}
+.vcSilent{background:#f1f5f9;color:#334155;border:1px solid #cbd5e1}
+.vcIntron{background:#f8fafc;color:#475569;border:1px solid #e2e8f0}
+.vcRNA{background:#dbeafe;color:#1e3a8a;border:1px solid #93c5fd}
+.vc5UTR{background:#ede9fe;color:#4c1d95;border:1px solid #c4b5fd}
+.vc3UTR{background:#e8d5f7;color:#4c1d95;border:1px solid #c4b5fd}
+.vcIGR{background:#cffafe;color:#164e63;border:1px solid #67e8f9}
+.vc5Flank{background:#e0f2fe;color:#0c4a6e;border:1px solid #7dd3fc}
+.vc3Flank{background:#f0f9ff;color:#0c4a6e;border:1px solid #bae6fd}
+.vcFeature_Elongation{background:#fef9c3;color:#713f12;border:1px solid #fde047}
+.vcSequence_Variant{background:#f9fafb;color:#374151;border:1px solid #d1d5db}
+.vcTargeted_Region{background:#f9fafb;color:#9ca3af;border:1px solid #e5e7eb}
+/* flowchart section */
+.flow-section{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:24px;margin-bottom:20px}
+.flow-section h2{font-size:16px;font-weight:700;color:#1e3a5f;margin-bottom:6px}
+.flow-section .desc{font-size:13px;color:#64748b;margin-bottom:20px;line-height:1.5}
+.flow-section code{font-family:Consolas,monospace;background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:12px}
+.mermaid{display:flex;justify-content:center;overflow-x:auto}
+.note-box{background:#fffbeb;border:1px solid #f59e0b;border-radius:6px;padding:12px 16px;margin-top:16px;font-size:13px;color:#78350f;line-height:1.5}
+.note-box strong{font-weight:700}
+.footnote{margin-top:10px;font-size:12px;color:#94a3b8}
+.pcbadge{display:inline-block;padding:3px 9px;border-radius:4px;font-family:Consolas,'JetBrains Mono',monospace;font-size:12px;font-weight:600;white-space:nowrap}
+.pc-splice{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd}
+.pc-star{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
+.pc-coding{background:#dcfce7;color:#14532d;border:1px solid #86efac}
+.pc-fs{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.pc-inframe{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
+.pc-silent{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Genome Nexus — Annotation Logic Reference</h1>
+  <p>Consequence terms · variant classifications · annotation flowcharts</p>
+</header>
+
+<nav class="tabs">
+  <button class="active" onclick="switchTab('terms',this)">Consequence Terms</button>
+  <button onclick="switchTab('classification',this)">Variant Classification Flow</button>
+  <button onclick="switchTab('hgvsp',this)">HGVSp Short Flow</button>
+</nav>
+
+<!-- ═══════════════════════ TAB 1: TERMS TABLE ═══════════════════════ -->
+<div id="tab-terms" class="tab-content active">
+  <div class="stats" id="stats"></div>
+  <div class="controls">
+    <input type="search" id="search" placeholder="Search terms or classifications…" oninput="applyFilters()">
+    <select id="fBand" onchange="applyFilters()">
+      <option value="">All Severity Bands</option>
+      <option>High</option><option>Moderate</option><option>Low</option><option>Modifier</option><option>Legacy</option>
+    </select>
+    <select id="fVC" onchange="applyFilters()">
+      <option value="">All Classifications</option>
+    </select>
+    <label><input type="checkbox" id="fSplice" onchange="applyFilters()"> Splice site variants only</label>
+  </div>
+  <details style="margin-bottom:14px">
+    <summary style="cursor:pointer;font-weight:600;color:#94a3b8;font-size:13px;user-select:none;padding:6px 0">
+      VEP Splice Consequence Terms — Genomic Range
+    </summary>
+    <div style="margin-top:10px;overflow-x:auto">
+      <img src="splice_consequence_terms.png"
+           alt="VEP Splice Consequence Terms — Genomic Range"
+           style="max-width:100%;border-radius:6px;border:1px solid #334155">
+    </div>
+  </details>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="doSort('priority')">Priority</th>
+          <th onclick="doSort('band')">Band</th>
+          <th onclick="doSort('term')">Consequence Term</th>
+          <th onclick="doSort('classification')">Variant Classification</th>
+          <th>Splice Site Variant</th>
+          <th onclick="doSort('pc')">Protein Change</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <p class="footnote">† Classification depends on variantType (DEL/INS) and isInframe. See Variant Classification Flow tab for the full logic.<br>
+  Protein Change badges show one entry per possible output. Hover for source details.<br>
+  <strong>p.M1?</strong> — <code>?</code> is HGVS notation for "unknown protein effect": the start codon (Met1) is lost, but whether a downstream AUG creates a new ORF is uncertain. The <code>?</code> passes through Stage 1 unchanged (not in the AA3TO1 table).<br>
+  <strong>p.Edel</strong> (Stage 3 inframe deletion) — has <em>no position number</em>; only the ref AA(s) from the <code>amino_acids</code> field are available at that stage.</p>
+
+  <div class="note-box" style="margin-top:14px">
+    <strong>Why does <code>protein_altering_variant</code> show both Missense and In_Frame protein changes?</strong><br>
+    <code>protein_altering_variant</code> is a VEP catch-all term used when VEP cannot assign a more specific consequence.
+    Its default VARIANT_MAP entry is <code>Missense_Mutation</code>, but <code>resolveVariantClassification()</code>
+    overrides this for DEL/INS variants based on <strong>isInframe</strong>:<br><br>
+    <table style="font-size:12px;border-collapse:collapse;margin:6px 0">
+      <tr style="background:#e2e8f0;color:#1e293b"><th style="padding:4px 10px;text-align:left">variantType</th><th style="padding:4px 10px;text-align:left">isInframe</th><th style="padding:4px 10px;text-align:left">Actual classification</th></tr>
+      <tr><td style="padding:3px 10px">SNV / other</td><td style="padding:3px 10px">any</td><td style="padding:3px 10px">Missense_Mutation (default)</td></tr>
+      <tr style="background:#f1f5f9;color:#1e293b"><td style="padding:3px 10px">DEL</td><td style="padding:3px 10px">true</td><td style="padding:3px 10px">In_Frame_Del</td></tr>
+      <tr><td style="padding:3px 10px">INS</td><td style="padding:3px 10px">true</td><td style="padding:3px 10px">In_Frame_Ins</td></tr>
+    </table>
+    Code: <code>VariantClassificationResolver.java</code> lines 137–145.
+  </div>
+
+  <div class="note-box" style="margin-top:14px">
+    <strong>Why are there 3 different frameshift protein change formats?</strong><br>
+    The format depends entirely on which data VEP provides for that specific variant.
+    <code>ProteinChangeResolver</code> tries three stages in order and stops at the first non-null result:<br><br>
+    <table style="font-size:12px;border-collapse:collapse;margin:6px 0;width:100%">
+      <tr style="background:#e2e8f0;color:#1e293b">
+        <th style="padding:4px 10px;text-align:left">Stage</th>
+        <th style="padding:4px 10px;text-align:left">Condition</th>
+        <th style="padding:4px 10px;text-align:left">Output format</th>
+        <th style="padding:4px 10px;text-align:left">Example</th>
+        <th style="padding:4px 10px;text-align:left">Notes</th>
+      </tr>
+      <tr>
+        <td style="padding:4px 10px"><strong>Stage 1</strong></td>
+        <td style="padding:4px 10px">VEP provides <code>hgvsp</code></td>
+        <td style="padding:4px 10px"><code>p.{ref}{pos}{alt}fs*{N}</code></td>
+        <td style="padding:4px 10px"><code>p.L431Vfs*22</code></td>
+        <td style="padding:4px 10px">Full information: alt AA + stop-codon distance N come directly from VEP</td>
+      </tr>
+      <tr style="background:#f1f5f9;color:#1e293b">
+        <td style="padding:4px 10px"><strong>Stage 2</strong></td>
+        <td style="padding:4px 10px"><code>hgvsp</code> absent; <code>hgvsc</code> present; <code>amino_acids</code> null</td>
+        <td style="padding:4px 10px"><code>p.*{n}fs*</code></td>
+        <td style="padding:4px 10px"><code>p.*536fs*</code></td>
+        <td style="padding:4px 10px">Position computed from cDNA: <code>(cPos+2)/3</code>. No alt AA. No stop-codon distance (GN does not translate the frameshifted CDS).</td>
+      </tr>
+      <tr>
+        <td style="padding:4px 10px"><strong>Stage 3</strong></td>
+        <td style="padding:4px 10px"><code>hgvsp</code> absent; <code>amino_acids</code> present</td>
+        <td style="padding:4px 10px"><code>p.{ref}{pos}fs</code></td>
+        <td style="padding:4px 10px"><code>p.C536fs</code></td>
+        <td style="padding:4px 10px">Ref AA and position from <code>amino_acids</code>/<code>protein_start</code>. No alt AA. No <code>*</code> at all — Stage 3 does not append it for frameshifts.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="note-box" style="margin-top:14px">
+    <strong>What are Legacy terms?</strong><br>
+    Legacy terms appear in <code>VARIANT_MAP</code> (<code>VariantClassificationResolver.java</code>) so that variant classifications can be resolved from them,
+    but they have <em>no entry</em> in <code>EFFECT_PRIORITY</code> (<code>TranscriptConsequencePrioritizer.java</code>).
+    This means they are never selected as the "highest-priority consequence" during transcript picking —
+    they only matter if they are already the sole consequence on a transcript.<br><br>
+    Most are <strong>ANNOVAR-style names</strong> (e.g. <code>stopgain_SNV</code>, <code>nonframeshift_insertion</code>) or simplified aliases
+    (e.g. <code>splicing</code>, <code>upstream</code>) from older annotation pipelines.
+    One is a <strong>typo</strong>: <code>disrupting_inframe_deletion</code> (should be <code>disruptive_inframe_deletion</code>).<br><br>
+    <strong>Code location:</strong>
+    <code>component/src/main/java/org/cbioportal/genome_nexus/component/annotation/VariantClassificationResolver.java</code>
+    — bottom of <code>initVariantMap()</code>, lines 201 and 244–252.
+    These terms have no corresponding entry in <code>TranscriptConsequencePrioritizer.java</code>.
+  </div>
+</div>
+
+<!-- ══════════════════ TAB 2: VARIANT CLASSIFICATION FLOW ══════════════════ -->
+<div id="tab-classification" class="tab-content">
+
+  <div class="flow-section">
+    <h2>How Variant Classification Is Determined</h2>
+    <p class="desc">
+      Source: <code>VariantClassificationResolver.resolve()</code><br>
+      Picks the best consequence term from the transcript (or intergenic consequences, or mostSevereConsequence),
+      then maps it to a MAF-style classification string. DEL/INS variants and the isInframe flag can override the map result.
+    </p>
+    <div class="mermaid" id="diag-classification">
+flowchart TD
+    A(["resolve(variantAnnotation, transcriptConsequence)"]) --> B{"transcriptConsequence\nnot null?"}
+    B -->|Yes| C["pickHighestPriorityConsequence()\nfrom transcript.consequenceTerms\n— uses EFFECT_PRIORITY map"]
+    B -->|No| D{"intergenicConsequences\npresent on annotation?"}
+    D -->|Yes| E["pickHighestPriorityConsequence()\nfrom all intergenic terms"]
+    D -->|No| F["use annotation\n.mostSevereConsequence"]
+    C --> R(["resolveVariantClassification(consequence, variantType, isInframe)"])
+    E --> R
+    F --> R
+    R --> V{"variantType is null\nAND consequence does\nnot contain 'splice'?"}
+    V -->|Yes| TGT(["Targeted_Region"])
+    V -->|No| H{"consequence in\nframeshift_variant OR\nprotein_altering_variant OR\ncoding_sequence_variant\nAND NOT isInframe?"}
+    H -->|"DEL"| FSD(["Frame_Shift_Del"])
+    H -->|"INS"| FSI(["Frame_Shift_Ins"])
+    H -->|No| K{"consequence in\nprotein_altering_variant OR\ncoding_sequence_variant\nAND isInframe?"}
+    K -->|"DEL"| IFD(["In_Frame_Del"])
+    K -->|"INS"| IFI(["In_Frame_Ins"])
+    K -->|No| MAP(["VARIANT_MAP.getOrDefault()\ndefault: Targeted_Region"])
+
+    style A fill:#1e3a5f,color:#fff,stroke:#1e3a5f
+    style R fill:#1e3a5f,color:#fff,stroke:#1e3a5f
+    style FSD fill:#dc2626,color:#fff,stroke:#dc2626
+    style FSI fill:#dc2626,color:#fff,stroke:#dc2626
+    style IFD fill:#15803d,color:#fff,stroke:#15803d
+    style IFI fill:#15803d,color:#fff,stroke:#15803d
+    style TGT fill:#94a3b8,color:#fff,stroke:#94a3b8
+    style MAP fill:#475569,color:#fff,stroke:#475569
+    </div>
+  </div>
+
+  <div class="flow-section">
+    <h2>isInframe Calculation</h2>
+    <p class="desc">Used in the logic above. <code>VariantClassificationResolver.isInframe()</code> — determines whether an indel preserves the reading frame.</p>
+    <div class="mermaid" id="diag-inframe">
+flowchart LR
+    A["Get referenceAllele and variantAllele\nfrom genomicLocationResolver"] --> B{"Both alleles\nnot null?"}
+    B -->|No| C(["isInframe = false"])
+    B -->|Yes| D["calcAlleleLength:\n'-' or null → 0\nelse → allele.length()"]
+    D --> E(["isInframe = |len_ref - len_alt| % 3 == 0"])
+    style E fill:#15803d,color:#fff,stroke:#15803d
+    style C fill:#94a3b8,color:#fff,stroke:#94a3b8
+    </div>
+  </div>
+
+  <div class="flow-section">
+    <h2>Consequence Term → Variant Classification Map</h2>
+    <p class="desc">Direct lookup table used in the final step above. Some entries have conditional overrides — see the flowchart.
+    Terms marked <strong>†</strong> can produce different results depending on variantType and isInframe.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;margin-top:4px" id="vc-map-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB 3: HGVSP SHORT FLOW ══════════════════ -->
+<div id="tab-hgvsp" class="tab-content">
+
+  <div class="flow-section">
+    <h2>Stage Overview — How HGVSp Short Is Determined</h2>
+    <p class="desc">
+      Source: <code>ProteinChangeResolver.resolveHgvspShort()</code><br>
+      Three stages are tried in order; the first non-null result wins. After all stages,
+      a VUE (Variant Update Engine) curated override may replace the value.
+    </p>
+    <div class="mermaid" id="diag-hgvsp-overview">
+flowchart TD
+    START(["resolveHgvspShort(variantAnnotation)"]) --> CT["Get canonical transcript\nvia CanonicalTranscriptResolver"]
+    CT --> S1{"STAGE 1\nhgvsp present AND\nvariantClassification\ndoes not contain 'splice'?"}
+    S1 -->|Yes| S1A["Strip transcript prefix\ne.g. ENSP00000288602.6:p.Val600Glu → p.Val600Glu\nURL-decode synonymous: p.%3D → p.=\nConvert 3-letter AAs to 1-letter codes"]
+    S1A --> DONE(["Return hgvspShort ✓"])
+    S1 -->|"No (hgvsp absent or splice)"| S2{"STAGE 2\nhgvsc present?"}
+    S2 -->|Yes| S2A["Extract cDNA position via regex\n.*cn.-?*digit.*\ncPos → pPos = cPos+2 / 3"]
+    S2A --> S2B{"hgvsc contains 'c.*'?\nUTR variant"}
+    S2B -->|Yes| S3
+    S2B -->|No| S2C{"consequenceTerms.get(0)\nis SPLICE_SITE_VARIANT?\nsplice_acceptor / donor / region_variant"}
+    S2C -->|Yes| S2D(["p.X{pPos}_splice"])
+    S2D --> DONE
+    S2C -->|No| S2E{"amino_acids is null?"}
+    S2E -->|"Yes + frameshift_variant"| S2F(["p.*{pPos}fs*"])
+    S2E -->|"Yes + non-frameshift"| S2G(["p.*{pPos}*"])
+    S2F --> DONE
+    S2G --> DONE
+    S2E -->|"No (amino_acids present)"| S3
+    S2 -->|No| S3{"STAGE 3\namino_acids not null?"}
+    S3 -->|No| NULL_OUT(["Return null"])
+    S3 -->|"Yes — inframe_insertion"| INS_DUP{"hgvsc contains 'dup'?"}
+    INS_DUP -->|"Yes — 1 AA"| D1(["p.{alt}{pStart-1}dup"])
+    INS_DUP -->|"Yes — multi AA"| D2(["p.{first}{pStart+1}_{last}{pStart+len}dup"])
+    INS_DUP -->|No| D3(["p.X{pStart}_X{pEnd}ins{alt}"])
+    D1 --> DONE
+    D2 --> DONE
+    D3 --> DONE
+    S3 -->|"Yes — inframe_deletion"| DEL(["p.{refAAs}del"])
+    DEL --> DONE
+    S3 -->|"Yes — frameshift_variant"| FS(["p.{refAA[0]}{pStart}fs"])
+    FS --> DONE
+    S3 -->|"Yes — other"| SUB(["p.{refAA[0]}{pStart}{altAA}"])
+    SUB --> DONE
+    DONE --> VUE{"VUE curated\noverride match?"}
+    VUE -->|Yes| VUEO["Replace with curated\nhgvsp_short value"]
+    VUE -->|No| FINAL(["Return hgvspShort"])
+    VUEO --> FINAL
+
+    style START fill:#1e3a5f,color:#fff,stroke:#1e3a5f
+    style DONE fill:#15803d,color:#fff,stroke:#15803d
+    style FINAL fill:#15803d,color:#fff,stroke:#15803d
+    style NULL_OUT fill:#94a3b8,color:#fff,stroke:#94a3b8
+    style S1A fill:#dbeafe,color:#1e293b,stroke:#93c5fd
+    style S2D fill:#ede9fe,color:#4c1d95,stroke:#c4b5fd
+    style S2F fill:#ede9fe,color:#4c1d95,stroke:#c4b5fd
+    style S2G fill:#ede9fe,color:#4c1d95,stroke:#c4b5fd
+    style D1 fill:#dcfce7,color:#14532d,stroke:#86efac
+    style D2 fill:#dcfce7,color:#14532d,stroke:#86efac
+    style D3 fill:#dcfce7,color:#14532d,stroke:#86efac
+    style DEL fill:#dcfce7,color:#14532d,stroke:#86efac
+    style FS fill:#dcfce7,color:#14532d,stroke:#86efac
+    style SUB fill:#dcfce7,color:#14532d,stroke:#86efac
+    </div>
+  </div>
+
+  <div class="flow-section">
+    <h2>Stage 1 — 3-Letter to 1-Letter Amino Acid Conversion</h2>
+    <p class="desc">Applied when hgvsp is present and classification is not a splice variant. Source: <code>AA3TO1</code> table in <code>ProteinChangeResolver.java</code>.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;font-size:13px" id="aa-grid"></div>
+  </div>
+
+  <div class="note-box">
+    <strong>Known Limitations:</strong><br>
+    <strong>Stage 2 splice check (line 135):</strong> Only checks <code>consequenceTerms.get(0)</code>. If <code>frameshift_variant</code>
+    is listed first (VEP orders by severity), a co-occurring <code>splice_region_variant</code> at index 1 is silently ignored —
+    Stage 2 returns null even for splice-site variants and falls to Stage 3.<br><br>
+    <strong>Stop codon distance:</strong> The distance after a frameshift (e.g. <code>fs*3</code>) is never computed.
+    VEP provides it in <code>hgvsp</code> when possible, but skips it for variants crossing the CDS/UTR boundary or
+    shifting into an intron — those fall to Stage 2/3 which emit only <code>fs</code> or <code>fs*</code> without distance.
+  </div>
+</div>
+
+<script>
+mermaid.initialize({ startOnLoad: false, theme: 'default', flowchart: { curve: 'basis', nodeSpacing: 40, rankSpacing: 45 } });
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+const TERMS = [
+  // High
+  { term:'transcript_ablation',      p:1,  band:'High',     vc:'Splice_Site',            splice:false, note:'Deleted region includes a transcript feature' },
+  { term:'exon_loss_variant',         p:1,  band:'High',     vc:'Splice_Site',            splice:false, note:'An exon is lost from the transcript' },
+  { term:'splice_donor_variant',      p:2,  band:'High',     vc:'Splice_Site',            splice:true,  note:'Change in 2-base region at 5′ end of intron' },
+  { term:'splice_acceptor_variant',   p:2,  band:'High',     vc:'Splice_Site',            splice:true,  note:'Change in 2-base region at 3′ end of intron' },
+  { term:'stop_gained',               p:3,  band:'High',     vc:'Nonsense_Mutation',      splice:false, note:'Premature stop codon introduced' },
+  { term:'frameshift_variant',        p:3,  band:'High',     vc:'Frame_Shift†',           splice:false, note:'Insertion/deletion not a multiple of 3; maps via DEL/INS+isInframe logic' },
+  { term:'stop_lost',                 p:3,  band:'High',     vc:'Nonstop_Mutation',       splice:false, note:'Stop codon changed; transcript elongated' },
+  { term:'start_lost',                p:4,  band:'High',     vc:'Translation_Start_Site', splice:false, note:'Canonical start codon changed' },
+  { term:'initiator_codon_variant',   p:4,  band:'High',     vc:'Translation_Start_Site', splice:false, note:'First codon of transcript changed' },
+  { term:'transcript_amplification',  p:5,  band:'High',     vc:'Intron',                 splice:false, note:'Amplification of region containing a transcript' },
+  { term:'feature_elongation',        p:6,  band:'High',     vc:'Feature_Elongation',     splice:false, note:'Extension of a genomic feature' },
+  { term:'feature_truncation',        p:6,  band:'High',     vc:'Feature_Elongation',     splice:false, note:'Reduction of a genomic feature' },
+  // Moderate
+  { term:'disruptive_inframe_insertion', p:7, band:'Moderate', vc:'In_Frame_Ins',         splice:false, note:'Inframe insertion within an existing codon' },
+  { term:'disruptive_inframe_deletion',  p:7, band:'Moderate', vc:'In_Frame_Del',         splice:false, note:'Inframe deletion starting within an existing codon' },
+  { term:'inframe_insertion',         p:7,  band:'Moderate', vc:'In_Frame_Ins',           splice:false, note:'Inframe non-synonymous insertion' },
+  { term:'inframe_deletion',          p:7,  band:'Moderate', vc:'In_Frame_Del',           splice:false, note:'Inframe non-synonymous deletion' },
+  { term:'protein_altering_variant',  p:8,  band:'Moderate', vc:'Missense_Mutation†',     splice:false, note:'Changes protein; may resolve to Frame_Shift or In_Frame based on type+isInframe' },
+  { term:'missense_variant',          p:9,  band:'Moderate', vc:'Missense_Mutation',      splice:false, note:'Different amino acid, same protein length' },
+  { term:'conservative_missense_variant', p:9, band:'Moderate', vc:'Missense_Mutation',   splice:false, note:'Different but similar amino acid' },
+  { term:'rare_amino_acid_variant',   p:9,  band:'Moderate', vc:'Missense_Mutation',      splice:false, note:'Rare amino acid codon changed' },
+  // Low
+  { term:'splice_donor_5th_base_variant', p:10, band:'Low', vc:'Splice_Region',           splice:false, note:'5th base after start of intron' },
+  { term:'splice_region_variant',     p:10, band:'Low',      vc:'Splice_Region',          splice:true,  note:'1–3 exonic or 3–8 intronic bases from splice site' },
+  { term:'splice_donor_region_variant', p:10, band:'Low',    vc:'Splice_Region',          splice:false, note:'3rd–6th base after 5′ splice junction' },
+  { term:'splice_polypyrimidine_tract_variant', p:10, band:'Low', vc:'Splice_Region',     splice:false, note:'Polypyrimidine tract at 3′ end of intron' },
+  { term:'synonymous_variant',        p:11, band:'Low',      vc:'Silent',                 splice:false, note:'No amino acid change' },
+  { term:'start_retained_variant',    p:11, band:'Low',      vc:'Silent',                 splice:false, note:'Start codon base changed but start retained' },
+  { term:'stop_retained_variant',     p:11, band:'Low',      vc:'Silent',                 splice:false, note:'Terminator base changed but stop retained' },
+  { term:'incomplete_terminal_codon_variant', p:12, band:'Low', vc:'Silent',              splice:false, note:'Final codon of incomplete transcript changed' },
+  // Modifier
+  { term:'coding_sequence_variant',   p:13, band:'Modifier', vc:'Missense_Mutation†',     splice:false, note:'Changes coding sequence; may resolve to Frame_Shift or In_Frame' },
+  { term:'mature_mirna_variant',      p:13, band:'Modifier', vc:'RNA',                    splice:false, note:'Located within mature miRNA sequence' },
+  { term:'exon_variant',              p:13, band:'Modifier', vc:'RNA',                    splice:false, note:'Changes exon sequence' },
+  { term:'5_prime_utr_variant',       p:14, band:'Modifier', vc:"5'UTR",                  splice:false, note:"5′ UTR variant" },
+  { term:'5_prime_utr_premature_start_codon_gain_variant', p:14, band:'Modifier', vc:"5'UTR", splice:false, note:'snpEff: start codon gained in 5′ UTR' },
+  { term:'3_prime_utr_variant',       p:14, band:'Modifier', vc:"3'UTR",                  splice:false, note:"3′ UTR variant" },
+  { term:'non_coding_exon_variant',   p:15, band:'Modifier', vc:'RNA',                    splice:false, note:'Changes non-coding exon sequence' },
+  { term:'non_coding_transcript_exon_variant', p:15, band:'Modifier', vc:'RNA',           splice:false, note:'snpEff alias for non_coding_exon_variant' },
+  { term:'non_coding_transcript_variant', p:16, band:'Modifier', vc:'RNA',                splice:false, note:'Non-coding RNA gene transcript variant' },
+  { term:'nc_transcript_variant',     p:16, band:'Modifier', vc:'RNA',                    splice:false, note:'Older alias for non_coding_transcript_variant' },
+  { term:'intron_variant',            p:16, band:'Modifier', vc:'Intron',                 splice:false, note:'Occurring within an intron' },
+  { term:'intragenic_variant',        p:16, band:'Modifier', vc:'Intron',                 splice:false, note:'Within gene but outside all transcript features' },
+  { term:'intragenic',                p:16, band:'Modifier', vc:'Intron',                 splice:false, note:'snpEff alias for intragenic_variant' },
+  { term:'nmd_transcript_variant',    p:17, band:'Modifier', vc:'Silent',                 splice:false, note:'Target of nonsense-mediated decay' },
+  { term:'coding_transcript_variant', p:18, band:'Modifier', vc:'Missense_Mutation',      splice:false, note:'Protein-coding gene transcript variant' },
+  { term:'upstream_gene_variant',     p:19, band:'Modifier', vc:"5'Flank",                splice:false, note:"5′ of gene" },
+  { term:'downstream_gene_variant',   p:19, band:'Modifier', vc:"3'Flank",                splice:false, note:"3′ of gene" },
+  { term:'tfbs_ablation',             p:20, band:'Modifier', vc:'IGR',                    splice:false, note:'Deletion including a TFBS' },
+  { term:'tfbs_amplification',        p:20, band:'Modifier', vc:'IGR',                    splice:false, note:'Amplification including a TFBS' },
+  { term:'tf_binding_site_variant',   p:20, band:'Modifier', vc:'IGR',                    splice:false, note:'Within a transcription factor binding site' },
+  { term:'regulatory_region_ablation', p:20, band:'Modifier', vc:'IGR',                   splice:false, note:'Deletion of a regulatory region' },
+  { term:'regulatory_region_amplification', p:20, band:'Modifier', vc:'IGR',              splice:false, note:'Amplification of a regulatory region' },
+  { term:'regulatory_region_variant', p:20, band:'Modifier', vc:'IGR',                    splice:false, note:'Within a regulatory region' },
+  { term:'regulatory_region',         p:20, band:'Modifier', vc:'IGR',                    splice:false, note:'snpEff alias for regulatory_region_variant' },
+  { term:'intergenic_variant',        p:21, band:'Modifier', vc:'IGR',                    splice:false, note:'Between genes' },
+  { term:'intergenic_region',         p:21, band:'Modifier', vc:'IGR',                    splice:false, note:'snpEff alias for intergenic_variant' },
+  { term:'sequence_variant',          p:21, band:'Modifier', vc:'Sequence_Variant',       splice:false, note:'Non-exact copy of sequence feature' },
+  // Legacy aliases (in VARIANT_MAP but no EFFECT_PRIORITY entry)
+  // Source: VariantClassificationResolver.java initVariantMap() lines 201, 244-252
+  { term:'splicing',                  p:null, band:'Legacy', vc:'Splice_Region',           splice:false, note:'ANNOVAR/snpEff alias — VariantClassificationResolver.java:244' },
+  { term:'nonframeshift_insertion',   p:null, band:'Legacy', vc:'In_Frame_Ins',            splice:false, note:'ANNOVAR alias — VariantClassificationResolver.java:245' },
+  { term:'frameshift_insertion',      p:null, band:'Legacy', vc:'Frame_Shift_Ins',         splice:false, note:'ANNOVAR alias — VariantClassificationResolver.java:246' },
+  { term:'stopgain_SNV',              p:null, band:'Legacy', vc:'Nonsense_Mutation',       splice:false, note:'ANNOVAR alias — VariantClassificationResolver.java:247' },
+  { term:'frameshift_deletion',       p:null, band:'Legacy', vc:'Frame_Shift_Del',         splice:false, note:'ANNOVAR alias — VariantClassificationResolver.java:248' },
+  { term:'stoploss_SNV',              p:null, band:'Legacy', vc:'Nonstop_Mutation',        splice:false, note:'ANNOVAR alias — VariantClassificationResolver.java:249' },
+  { term:'upstream',                  p:null, band:'Legacy', vc:"5'Flank",                 splice:false, note:'ANNOVAR alias for upstream_gene_variant — VariantClassificationResolver.java:250' },
+  { term:'nonframeshift_deletion',    p:null, band:'Legacy', vc:'In_Frame_Del',            splice:false, note:'ANNOVAR alias — VariantClassificationResolver.java:251' },
+  { term:'nonsynonymous_SNV',         p:null, band:'Legacy', vc:'Missense_Mutation',       splice:false, note:'ANNOVAR alias — VariantClassificationResolver.java:252' },
+  { term:'disrupting_inframe_deletion', p:null, band:'Legacy', vc:'In_Frame_Del',          splice:false, note:'Typo variant of disruptive_inframe_deletion — VariantClassificationResolver.java:201' },
+];
+
+// Protein change format per consequence term. Arrays allow showing all stage-dependent outputs.
+// Each entry: { label, style, stageLabel, tip }
+// stageLabel is shown visibly under the badge. tip is the hover tooltip.
+// Labels use 1-letter AA codes — Stage 1 converts via AA3TO1 (Ter→*, Val→V, etc.)
+// Stage 1 is suppressed when variantClassification.toLowerCase().contains("splice") — line 253.
+// Stage 2: only fires when hgvsp is null. Only reads consequenceTerms.get(0) — line 135.
+// Stage 3: only fires when hgvspShort is still null AND amino_acids is not null.
+const PROTEIN_CHANGE = {
+  // ── SPLICE_SITE_VARIANTS (ProteinChangeResolver.java:27-29) ─────────────
+  // Classification = Splice_Site → "splice" → Stage 1 suppressed.
+  // Stage 2, line 137: SPLICE_SITE_VARIANTS.contains(get(0)) → "p.X" + pPos + "_splice"
+  // pPos derived from hgvsc cDNA position: pPos = (cPos + 2) / 3
+  'splice_acceptor_variant':  [{ label:'p.X{n}_splice', style:'pc-splice', stageLabel:'Stage 2', tip:'hgvsc → pPos=(cPos+2)/3 → p.X{pPos}_splice (line 137). Stage 1 suppressed: Splice_Site classification.' }],
+  'splice_donor_variant':     [{ label:'p.X{n}_splice', style:'pc-splice', stageLabel:'Stage 2', tip:'hgvsc → pPos=(cPos+2)/3 → p.X{pPos}_splice (line 137). Stage 1 suppressed: Splice_Site classification.' }],
+  'splice_region_variant':    [{ label:'p.X{n}_splice', style:'pc-splice', stageLabel:'Stage 2', tip:'hgvsc → pPos=(cPos+2)/3 → p.X{pPos}_splice (line 137). Stage 1 suppressed: Splice_Region classification.' }],
+  'splicing':                 [{ label:'p.X{n}_splice', style:'pc-splice', stageLabel:'Stage 2', tip:'Legacy alias — same logic as splice_region_variant.' }],
+
+  // ── Newer VEP 105 splice terms — NOT in SPLICE_SITE_VARIANTS ────────────
+  // Classification = Splice_Region → "splice" → Stage 1 suppressed.
+  // Stage 2, line 139+150: amino_acids is null → "p.*" + pPos + "*"
+  'splice_donor_5th_base_variant':       [{ label:'p.*{n}*', style:'pc-star', stageLabel:'Stage 2', tip:'Stage 1 suppressed (Splice_Region). Not in SPLICE_SITE_VARIANTS → else-if branch (line 139): amino_acids null → p.*{pPos}* (line 150).' }],
+  'splice_donor_region_variant':         [{ label:'p.*{n}*', style:'pc-star', stageLabel:'Stage 2', tip:'Stage 1 suppressed (Splice_Region). Not in SPLICE_SITE_VARIANTS → else-if branch (line 139): amino_acids null → p.*{pPos}* (line 150).' }],
+  'splice_polypyrimidine_tract_variant': [{ label:'p.*{n}*', style:'pc-star', stageLabel:'Stage 2', tip:'Stage 1 suppressed (Splice_Region). Not in SPLICE_SITE_VARIANTS → else-if branch (line 139): amino_acids null → p.*{pPos}* (line 150).' }],
+
+  // ── Intron / intragenic ──────────────────────────────────────────────────
+  // Classification = Intron (no "splice") → Stage 1 NOT suppressed, but VEP rarely
+  // provides hgvsp for pure intronic variants → Stage 1 returns null.
+  // Stage 2 fires when hgvsc is present + amino_acids null → p.*{n}*
+  'intron_variant':    [{ label:'p.*{n}*', style:'pc-star', stageLabel:'Stage 2', tip:'Stage 1 usually null (VEP rarely provides hgvsp for intronic variants). Stage 2: hgvsc present, amino_acids null → p.*{pPos}* (line 150).' }],
+  'intragenic_variant':[{ label:'p.*{n}*', style:'pc-star', stageLabel:'Stage 2', tip:'Same as intron_variant — Stage 2 p.*{pPos}* (line 150).' }],
+  'intragenic':        [{ label:'p.*{n}*', style:'pc-star', stageLabel:'Stage 2', tip:'Legacy alias for intragenic_variant.' }],
+
+  // ── Stop gained ──────────────────────────────────────────────────────────
+  // Stage 1: VEP hgvsp e.g. "ENSP...:p.Arg100Ter" → strip prefix → Arg→R, Ter→* → p.R100*
+  // Verified by test: p.D1450* (4:g.77675978_77675979insC), p.Q928* (11:g.62393546_62393547delinsAA)
+  'stop_gained': [{ label:'p.R100*', style:'pc-coding', stageLabel:'Stage 1', tip:'VEP hgvsp e.g. p.Arg100Ter → Arg→R, Ter→* via AA3TO1. Verified: p.D1450*, p.Q928* in ProteinChangeResolverTest.' }],
+  'stopgain_SNV':[{ label:'p.R100*', style:'pc-coding', stageLabel:'Stage 1', tip:'Legacy alias — same as stop_gained.' }],
+
+  // ── Stop lost ────────────────────────────────────────────────────────────
+  // Stage 1: VEP hgvsp format is p.Ter{pos}{NewAA}ext*{N} (HGVS 2.0 — uses * for stop, 3-letter for AAs).
+  // Genome nexus Stage 1 converts: Ter→*, e.g. Ala→A → produces p.*{pos}{a}ext*{N}.
+  // N (stop distance) is computed by VEP, NOT by genome nexus.
+  // No test case for stop_lost in the repo — format is derived from Stage 1 logic + HGVS spec.
+  // When VEP cannot determine stop distance it may use ? instead of a number: p.*877Aext*?
+  'stop_lost':   [
+    { label:'p.*877Aext*23', style:'pc-coding', stageLabel:'Stage 1', tip:'Genome Nexus output after Stage 1. VEP provides p.Ter877Alaext*23 → Ter→*, Ala→A. Stop distance N is from VEP, not genome nexus. May be ? if VEP cannot determine it.' },
+    { label:'p.*877Aext*?',  style:'pc-coding', stageLabel:'Stage 1', tip:'When VEP cannot determine the stop distance, it returns ? instead of a number.' },
+  ],
+  'stoploss_SNV':[{ label:'p.*877Aext*23', style:'pc-coding', stageLabel:'Stage 1', tip:'Legacy alias — same as stop_lost.' }],
+
+  // ── Start lost ───────────────────────────────────────────────────────────
+  // Stage 1: VEP hgvsp = "p.Met1?" → Met→M → p.M1?
+  // ? = HGVS notation for unknown protein-level consequence: the canonical start codon is
+  // disrupted but whether a downstream AUG creates a functional new ORF is unknown.
+  // The ? character is not in AA3TO1 and passes through Stage 1 unchanged.
+  'start_lost':             [{ label:'p.M1?', style:'pc-coding', stageLabel:'Stage 1', tip:'VEP hgvsp p.Met1? → Met→M → p.M1?. ? = HGVS unknown effect: start codon lost; downstream ORF uncertain. ? is not in AA3TO1 — unchanged by Stage 1.' }],
+  'initiator_codon_variant':[{ label:'p.M1?', style:'pc-coding', stageLabel:'Stage 1', tip:'Same as start_lost — VEP provides p.Met1?.' }],
+
+  // ── Frameshift ────────────────────────────────────────────────────────────
+  // Three distinct outputs depending on which stage fires:
+  //
+  // Stage 1 — VEP provides hgvsp, e.g. p.Leu431ValfsTer22
+  //   → Leu→L, Val→V, Ter→* → p.L431Vfs*22
+  //   Format: p.{refAA}{pos}{altAA}fs*{stopDist}  — stop distance is computed by VEP.
+  //   Verified by test cases: p.L431Vfs*22, p.P692Lfs*43, p.S378Ffs*6, p.A765Rfs*98, etc.
+  //
+  // Stage 2 — hgvsp absent, hgvsc present, amino_acids null (line 144+147)
+  //   → "p.*" + pPos + "fs*"
+  //   The trailing * has NO stop-distance number — genome nexus does not compute it here.
+  //
+  // Stage 3 — amino_acids present (line 210+215)
+  //   → "p." + aaParts[0] + proteinStart + "fs"
+  //   aaParts[0] is the 1-letter ref AA from amino_acids field. No alt AA. No *.
+  'frameshift_variant': [
+    { label:'p.L431Vfs*22', style:'pc-fs',   stageLabel:'Stage 1', tip:'VEP provides hgvsp e.g. p.Leu431ValfsTer22 → Leu→L, Val→V, Ter→*. Stop distance (*22) computed by VEP. Verified: p.L431Vfs*22, p.P692Lfs*43, p.S378Ffs*6, p.A765Rfs*98 (ProteinChangeResolverTest).' },
+    { label:'p.*{n}fs*',    style:'pc-star', stageLabel:'Stage 2', tip:'hgvsp absent; hgvsc present; amino_acids null → "p.*"+pPos+"fs*" (line 147). Trailing * is a literal stop-codon marker with NO distance number — genome nexus does not compute it at Stage 2.' },
+    { label:'p.C536fs',     style:'pc-fs',   stageLabel:'Stage 3', tip:'VEP gave you amino_acids but not hgvsp for this transcript. Happens at CDS/UTR boundary frameshifts: VEP can identify which codon is disrupted (fills in amino_acids) but the frameshifted ORF extends into the UTR where VEP won\'t compute a new stop codon, so hgvsp is left absent. Without hgvsp, Genome Nexus has no stop-codon distance and simply appends "fs" with nothing after it. Code: "p."+aaParts[0]+proteinStart+"fs" (line 210+215). No alt AA. No * at all.' },
+  ],
+  'frameshift_insertion': [
+    { label:'p.L431Vfs*22', style:'pc-fs',   stageLabel:'Stage 1', tip:'Legacy alias — same Stage 1 logic as frameshift_variant.' },
+    { label:'p.*{n}fs*',    style:'pc-star', stageLabel:'Stage 2', tip:'Same Stage 2 logic — trailing * has no stop distance.' },
+    { label:'p.C536fs',     style:'pc-fs',   stageLabel:'Stage 3', tip:'VEP gave you amino_acids but not hgvsp for this transcript. Happens at CDS/UTR boundary frameshifts: VEP can identify which codon is disrupted (fills in amino_acids) but the frameshifted ORF extends into the UTR where VEP won\'t compute a new stop codon, so hgvsp is left absent. Without hgvsp, Genome Nexus has no stop-codon distance and simply appends "fs" with nothing after it.' },
+  ],
+  'frameshift_deletion': [
+    { label:'p.L431Vfs*22', style:'pc-fs',   stageLabel:'Stage 1', tip:'Legacy alias — same Stage 1 logic as frameshift_variant.' },
+    { label:'p.*{n}fs*',    style:'pc-star', stageLabel:'Stage 2', tip:'Same Stage 2 logic — trailing * has no stop distance.' },
+    { label:'p.C536fs',     style:'pc-fs',   stageLabel:'Stage 3', tip:'VEP gave you amino_acids but not hgvsp for this transcript. Happens at CDS/UTR boundary frameshifts: VEP can identify which codon is disrupted (fills in amino_acids) but the frameshifted ORF extends into the UTR where VEP won\'t compute a new stop codon, so hgvsp is left absent. Without hgvsp, Genome Nexus has no stop-codon distance and simply appends "fs" with nothing after it.' },
+  ],
+
+  // ── Inframe insertion ─────────────────────────────────────────────────────
+  // Stage 1: VEP provides hgvsp, converted by AA3TO1.
+  //   insertion: p.Lys10_Lys11insAla → p.K10_K11insA
+  //   dup 1 AA:  p.Lys10dup          → p.K10dup
+  //   dup multi: p.Gln575_Gly592dup  → p.Q575_G592dup  (verified in tests)
+  // Stage 3, non-dup (line 197): "p.X"+pStart+"_X"+pEnd+"ins"+aaParts[1]
+  'inframe_insertion': [
+    { label:'p.K10_K11insA', style:'pc-inframe', stageLabel:'Stage 1', tip:'VEP hgvsp e.g. p.Lys10_Lys11insAla → Lys→K, Ala→A via AA3TO1.' },
+    { label:'p.K10dup',      style:'pc-inframe', stageLabel:'Stage 1', tip:'VEP hgvsp single-AA dup e.g. p.Lys10dup → Lys→K.' },
+    { label:'p.X10_X15insA', style:'pc-inframe', stageLabel:'Stage 3', tip:'No hgvsp, non-dup: "p.X"+pStart+"_X"+pEnd+"ins"+aaParts[1] (line 197). Uses literal X — not the actual ref AA.' },
+  ],
+  'disruptive_inframe_insertion': [
+    { label:'p.K10_K11insA', style:'pc-inframe', stageLabel:'Stage 1', tip:'Same as inframe_insertion Stage 1.' },
+    { label:'p.K10dup',      style:'pc-inframe', stageLabel:'Stage 1', tip:'Dup case.' },
+    { label:'p.X10_X15insA', style:'pc-inframe', stageLabel:'Stage 3', tip:'Same as inframe_insertion Stage 3.' },
+  ],
+  'nonframeshift_insertion': [
+    { label:'p.K10_K11insA', style:'pc-inframe', stageLabel:'Stage 1', tip:'Legacy alias.' },
+    { label:'p.X10_X15insA', style:'pc-inframe', stageLabel:'Stage 3', tip:'Legacy alias Stage 3.' },
+  ],
+
+  // ── Inframe deletion ──────────────────────────────────────────────────────
+  // Stage 1: VEP provides hgvsp with position: p.Glu350del → Glu→E → p.E350del
+  //   Verified by test: p.E1350del (22:g.36689419_36689421del), p.S124_S127del
+  // Stage 3, line 206: "p." + aaParts[0] + "del"
+  //   aaParts[0] = ref AAs from amino_acids field (1-letter, NO position number).
+  //   e.g. amino_acids="E/-" → aaParts[0]="E" → p.Edel  ← intentionally missing position.
+  'inframe_deletion': [
+    { label:'p.E350del', style:'pc-inframe', stageLabel:'Stage 1', tip:'VEP hgvsp e.g. p.Glu350del → Glu→E. Has position. Verified: p.E1350del, p.S124_S127del (ProteinChangeResolverTest).' },
+    { label:'p.Edel',    style:'pc-inframe', stageLabel:'Stage 3', tip:'VEP gave you amino_acids but not hgvsp for this transcript. Happens at CDS/UTR boundary in-frame deletions: VEP can identify which amino acid(s) are deleted (fills in amino_acids) but leaves hgvsp absent. Code: "p."+aaParts[0]+"del" (line 206). aaParts[0] from amino_acids field has AAs only — NO position number.' },
+  ],
+  'disruptive_inframe_deletion': [
+    { label:'p.E350del', style:'pc-inframe', stageLabel:'Stage 1', tip:'Same as inframe_deletion Stage 1.' },
+    { label:'p.Edel',    style:'pc-inframe', stageLabel:'Stage 3', tip:'Same as inframe_deletion Stage 3 — no position.' },
+  ],
+  'disrupting_inframe_deletion': [
+    { label:'p.E350del', style:'pc-inframe', stageLabel:'Stage 1', tip:'Legacy typo alias.' },
+    { label:'p.Edel',    style:'pc-inframe', stageLabel:'Stage 3', tip:'No position — Stage 3.' },
+  ],
+  'nonframeshift_deletion': [
+    { label:'p.E350del', style:'pc-inframe', stageLabel:'Stage 1', tip:'Legacy alias.' },
+    { label:'p.Edel',    style:'pc-inframe', stageLabel:'Stage 3', tip:'No position — Stage 3.' },
+  ],
+
+  // ── Protein altering / coding — conditional classification ───────────────
+  'protein_altering_variant': [
+    { label:'p.V600E',      style:'pc-coding',  stageLabel:'', tip:'Missense_Mutation: Stage 1 from VEP hgvsp.' },
+    { label:'p.L431Vfs*22', style:'pc-fs',      stageLabel:'', tip:'Frame_Shift (DEL/INS, not inframe): Stage 1 from VEP hgvsp.' },
+    { label:'p.*{n}fs*',    style:'pc-star',    stageLabel:'', tip:'Frame_Shift: Stage 2 — hgvsp absent, hgvsc present, amino_acids null. No stop distance.' },
+    { label:'p.C536fs',     style:'pc-fs',      stageLabel:'', tip:'Frame_Shift: Stage 3 — VEP gave amino_acids but not hgvsp. Happens at CDS/UTR boundary frameshifts: frameshifted ORF extends into UTR where VEP won\'t compute stop codon. No * at all.' },
+    { label:'p.E350del',    style:'pc-inframe', stageLabel:'', tip:'In_Frame_Del (DEL, isInframe): Stage 1 from VEP hgvsp.' },
+  ],
+  'coding_sequence_variant': [
+    { label:'p.V600E', style:'pc-coding', stageLabel:'', tip:'Missense_Mutation: Stage 1 from VEP hgvsp.' },
+  ],
+
+  // ── Missense-type — Stage 1 only ─────────────────────────────────────────
+  // VEP always provides hgvsp for missense. Stage 3 would give same format if it somehow ran.
+  // Verified: p.V600E (7:g.140453136A>T), p.G12C, p.K416E (ProteinChangeResolverTest).
+  'missense_variant':             [{ label:'p.V600E', style:'pc-coding', stageLabel:'Stage 1', tip:'VEP hgvsp e.g. p.Val600Glu → Val→V, Glu→E. Verified: p.V600E, p.G12C, p.K416E (ProteinChangeResolverTest).' }],
+  'conservative_missense_variant':[{ label:'p.V600E', style:'pc-coding', stageLabel:'Stage 1', tip:'Same format as missense_variant.' }],
+  'rare_amino_acid_variant':      [{ label:'p.V600E', style:'pc-coding', stageLabel:'Stage 1', tip:'Same format as missense_variant.' }],
+  'coding_transcript_variant':    [{ label:'p.V600E', style:'pc-coding', stageLabel:'Stage 1', tip:'VEP provides hgvsp.' }],
+  'nonsynonymous_SNV':            [{ label:'p.V600E', style:'pc-coding', stageLabel:'Stage 1', tip:'Legacy alias.' }],
+
+  // ── Silent — Stage 1, VEP returns (p.%3D) ────────────────────────────────
+  // normalizeHgvsp() decodes (p.%3D) → p.= before AA3TO1 conversion (line 356-358).
+  'synonymous_variant':              [{ label:'p.=', style:'pc-silent', stageLabel:'Stage 1', tip:'VEP hgvsp = "(p.%3D)" → normalizeHgvsp decodes to p.= (line 356). % encoding for the = sign.' }],
+  'start_retained_variant':          [{ label:'p.=', style:'pc-silent', stageLabel:'Stage 1', tip:'VEP provides hgvsp.' }],
+  'stop_retained_variant':           [{ label:'p.=', style:'pc-silent', stageLabel:'Stage 1', tip:'VEP provides hgvsp.' }],
+  'incomplete_terminal_codon_variant':[{ label:'p.=', style:'pc-silent', stageLabel:'Stage 1', tip:'VEP provides hgvsp.' }],
+  'nmd_transcript_variant':          [{ label:'p.=', style:'pc-silent', stageLabel:'Stage 1', tip:'When VEP provides synonymous hgvsp on NMD transcript.' }],
+};
+
+const AA3TO1 = [
+  ['Ala','A'],['Arg','R'],['Asn','N'],['Asp','D'],['Asx','B'],['Cys','C'],
+  ['Glu','E'],['Gln','Q'],['Glx','Z'],['Gly','G'],['His','H'],['Ile','I'],
+  ['Leu','L'],['Lys','K'],['Met','M'],['Phe','F'],['Pro','P'],['Ser','S'],
+  ['Thr','T'],['Trp','W'],['Tyr','Y'],['Val','V'],['Xxx','X'],['Ter','*']
+];
+
+// ── VC class helper ──────────────────────────────────────────────────────────
+function vcClass(vc) {
+  const clean = vc.replace(/'/g,'').replace(/†/,'').replace(/ /g,'_');
+  const map = {
+    Splice_Site:'vcSplice_Site', Nonsense_Mutation:'vcNonsense_Mutation',
+    'Frame_Shift†':'vcFrame_Shift', Frame_Shift_Del:'vcFrame_Shift_Del',
+    Frame_Shift_Ins:'vcFrame_Shift_Ins', Frame_Shift:'vcFrame_Shift',
+    Nonstop_Mutation:'vcNonstop_Mutation', Translation_Start_Site:'vcTranslation_Start_Site',
+    In_Frame_Ins:'vcIn_Frame_Ins', In_Frame_Del:'vcIn_Frame_Del',
+    Missense_Mutation:'vcMissense_Mutation', 'Missense_Mutation†':'vcMissense_conditional',
+    Splice_Region:'vcSplice_Region', Silent:'vcSilent', Intron:'vcIntron', RNA:'vcRNA',
+    '5UTR':'vc5UTR', '3UTR':'vc3UTR', IGR:'vcIGR', '5Flank':'vc5Flank', '3Flank':'vc3Flank',
+    Feature_Elongation:'vcFeature_Elongation', Sequence_Variant:'vcSequence_Variant',
+    Targeted_Region:'vcTargeted_Region'
+  };
+  return map[vc] || map[clean] || 'vcTargeted_Region';
+}
+
+// ── Build stats ──────────────────────────────────────────────────────────────
+function buildStats() {
+  const bands = {};
+  TERMS.forEach(d => { bands[d.band] = (bands[d.band]||0)+1; });
+  const vcSet = new Set(TERMS.map(d => d.vc.replace('†','')));
+  const items = [
+    {v: TERMS.length, l: 'Total Terms'},
+    {v: bands.High||0, l: 'High Impact'},
+    {v: bands.Moderate||0, l: 'Moderate'},
+    {v: bands.Low||0, l: 'Low Impact'},
+    {v: bands.Modifier||0, l: 'Modifier'},
+    {v: bands.Legacy||0, l: 'Legacy Aliases'},
+    {v: TERMS.filter(d=>d.splice).length, l: 'Splice Site Variants'},
+    {v: vcSet.size, l: 'Unique Classifications'},
+  ];
+  document.getElementById('stats').innerHTML = items.map(i=>`<div class="stat"><div class="stat-val">${i.v}</div><div class="stat-lbl">${i.l}</div></div>`).join('');
+}
+
+// ── Populate VC filter ────────────────────────────────────────────────────────
+function buildVCFilter() {
+  const sel = document.getElementById('fVC');
+  const set = [...new Set(TERMS.map(d => d.vc.replace('†','')))].sort();
+  set.forEach(v => { const o = document.createElement('option'); o.value = o.textContent = v; sel.append(o); });
+}
+
+// ── Table rendering ───────────────────────────────────────────────────────────
+let sortField = '', sortDir = 1;
+let filtered = [...TERMS];
+
+function renderRows() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = filtered.map(d => {
+    const pcs = PROTEIN_CHANGE[d.term] || [];
+    const pcCell = pcs.length > 0
+      ? `<div style="display:flex;flex-wrap:wrap;gap:3px">${pcs.map(pc =>
+          `<span class="pcbadge ${pc.style}" title="${pc.tip}">${pc.label}</span>`
+        ).join('')}</div>`
+      : `<span style="color:#cbd5e1;font-size:12px">—</span>`;
+    return `
+    <tr class="r${d.band}">
+      <td><span class="pbadge ${d.p ? 'p'+d.p : 'pn'}">${d.p ?? '—'}</span></td>
+      <td><span class="bbadge b${d.band}">${d.band}</span></td>
+      <td class="term">${d.term}</td>
+      <td><span class="vcbadge ${vcClass(d.vc)}">${d.vc}</span></td>
+      <td>${d.splice ? '<span class="splice-mark">SPLICE_SITE_VARIANT</span>' : ''}</td>
+      <td>${pcCell}</td>
+      <td style="color:#64748b;font-size:12px">${d.note}</td>
+    </tr>`;
+  }).join('');
+}
+
+function doSort(f) {
+  if(sortField === f) sortDir *= -1; else { sortField = f; sortDir = 1; }
+  document.querySelectorAll('thead th').forEach(th => th.classList.remove('sort-asc','sort-desc'));
+  const fields = ['p','band','term','vc','','pc',''];
+  const idx = fields.indexOf(f);
+  if(idx >= 0) { const th = document.querySelectorAll('thead th')[idx]; th.classList.add(sortDir===1?'sort-asc':'sort-desc'); }
+  filtered.sort((a,b) => {
+    let av = a[f], bv = b[f];
+    if(av===null) av = 9999; if(bv===null) bv = 9999;
+    if(typeof av==='number') return (av-bv)*sortDir;
+    return String(av).localeCompare(String(bv)) * sortDir;
+  });
+  renderRows();
+}
+
+function applyFilters() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const band = document.getElementById('fBand').value;
+  const vc = document.getElementById('fVC').value;
+  const spliceOnly = document.getElementById('fSplice').checked;
+  filtered = TERMS.filter(d => {
+    if(q && !d.term.includes(q) && !d.vc.toLowerCase().includes(q)) return false;
+    if(band && d.band !== band) return false;
+    if(vc && !d.vc.replace('†','').startsWith(vc)) return false;
+    if(spliceOnly && !d.splice) return false;
+    return true;
+  });
+  doSort(sortField);
+}
+
+// ── VC Map Grid (tab 2) ───────────────────────────────────────────────────────
+function buildVCMapGrid() {
+  const grid = document.getElementById('vc-map-grid');
+  // group by classification
+  const groups = {};
+  TERMS.filter(d=>d.band!=='Legacy').forEach(d => {
+    const k = d.vc.replace('†','').trim();
+    if(!groups[k]) groups[k] = [];
+    groups[k].push(d.term);
+  });
+  const ORDER = ['Splice_Site','Nonsense_Mutation','Frame_Shift†','Nonstop_Mutation','Translation_Start_Site','In_Frame_Ins','In_Frame_Del','Missense_Mutation','Missense_Mutation†','Splice_Region','Silent','Intron','RNA',"5'UTR","3'UTR","IGR","5'Flank","3'Flank",'Feature_Elongation','Sequence_Variant'];
+  grid.innerHTML = ORDER.map(vcLabel => {
+    const key = vcLabel.replace('†','').trim();
+    const terms = groups[key];
+    if(!terms) return '';
+    const isConditional = vcLabel.endsWith('†');
+    return `<div style="border:1px solid #e2e8f0;border-radius:6px;padding:12px;background:#fff">
+      <div style="margin-bottom:8px"><span class="vcbadge ${vcClass(vcLabel)}">${vcLabel}</span>${isConditional?'<span style="font-size:11px;color:#c2410c;margin-left:6px">conditional</span>':''}</div>
+      ${terms.map(t=>`<div class="term" style="font-size:11px;padding:2px 0;color:#475569">${t}</div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ── AA Grid (tab 3) ───────────────────────────────────────────────────────────
+function buildAAGrid() {
+  const grid = document.getElementById('aa-grid');
+  grid.innerHTML = AA3TO1.map(([three, one]) => `
+    <div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px">
+      <span style="font-family:monospace;font-weight:700;color:#1e3a5f;min-width:30px">${three}</span>
+      <span style="color:#94a3b8">→</span>
+      <span style="font-family:monospace;font-weight:700;font-size:16px;color:#15803d">${one === '*' ? '* (Ter)' : one}</span>
+    </div>`).join('');
+}
+
+// ── Tab switching + lazy Mermaid render ───────────────────────────────────────
+const rendered = new Set();
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(!rendered.has(name)) {
+    rendered.add(name);
+    const nodes = document.getElementById('tab-'+name).querySelectorAll('.mermaid');
+    if(nodes.length) mermaid.run({ nodes: Array.from(nodes) });
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+buildStats();
+buildVCFilter();
+buildVCMapGrid();
+buildAAGrid();
+filtered = [...TERMS];
+doSort('p');
+</script>
+</body>
+</html>
