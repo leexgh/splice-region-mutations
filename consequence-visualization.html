@@ -45,7 +45,7 @@ tbody td{padding:8px 14px;vertical-align:middle}
 .vcbadge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:600}
 .splice-mark{display:inline-block;padding:2px 8px;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:4px;font-size:11px;font-weight:700}
 /* priority colors */
-.p1{background:#7f1d1d}.p2{background:#991b1b}.p3{background:#9a3412}.p4{background:#c2410c}.p5{background:#d97706}.p6{background:#ca8a04}.p7{background:#4d7c0f}.p8{background:#15803d}.p9{background:#0f766e}.p10{background:#0e7490}.p11{background:#1d4ed8}.p12{background:#4338ca}.p13{background:#6d28d9}.p14{background:#7c3aed}.p15{background:#9333ea}.p16{background:#a21caf}.p17{background:#be185d}.p18{background:#9f1239}.p19{background:#475569}.p20{background:#64748b}.p21{background:#94a3b8}.pn{background:#cbd5e1;color:#1e293b!important}
+.p1{background:#7f1d1d}.p2{background:#991b1b}.p3{background:#9a3412}.p4{background:#c2410c}.p5{background:#d97706}.p6{background:#ca8a04}.p7{background:#4d7c0f}.p8{background:#15803d}.p9{background:#0f766e}.p10{background:#0e7490}.p11{background:#1d4ed8}.p12{background:#4338ca}.p13{background:#6d28d9}.p14{background:#7c3aed}.p15{background:#9333ea}.p16{background:#a21caf}.p17{background:#be185d}.p18{background:#9f1239}.p19{background:#475569}.p20{background:#64748b}.p21{background:#94a3b8}.p22{background:#aab7c4}.pn{background:#cbd5e1;color:#1e293b!important}
 /* band colors */
 .bHigh{background:#fee2e2;color:#991b1b}.bModerate{background:#fed7aa;color:#7c2d12}.bLow{background:#fef3c7;color:#78350f}.bModifier{background:#dbeafe;color:#1e40af}.bLegacy{background:#f3e8ff;color:#6b21a8}
 /* row bg */
@@ -83,6 +83,9 @@ tbody td{padding:8px 14px;vertical-align:middle}
 .note-box strong{font-weight:700}
 .footnote{margin-top:10px;font-size:12px;color:#94a3b8}
 .pcbadge{display:inline-block;padding:3px 9px;border-radius:4px;font-family:Consolas,'JetBrains Mono',monospace;font-size:12px;font-weight:600;white-space:nowrap}
+.splice-toggle-icon::before{content:'+';color:#fff;font-size:18px;font-weight:700;line-height:1}
+details[open] .splice-toggle-icon::before{content:'−'}
+details summary::-webkit-details-marker{display:none}
 .pc-splice{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd}
 .pc-star{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
 .pc-coding{background:#dcfce7;color:#14532d;border:1px solid #86efac}
@@ -118,14 +121,15 @@ tbody td{padding:8px 14px;vertical-align:middle}
     </select>
     <label><input type="checkbox" id="fSplice" onchange="applyFilters()"> Splice site variants only</label>
   </div>
-  <details style="margin-bottom:14px">
-    <summary style="cursor:pointer;font-weight:600;color:#94a3b8;font-size:13px;user-select:none;padding:6px 0">
-      VEP Splice Consequence Terms — Genomic Range
+  <details style="margin-bottom:14px;background:#fff;border:2px solid #1e3a5f;border-radius:8px;overflow:hidden">
+    <summary style="list-style:none;background:#1e3a5f;padding:8px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none">
+      <span style="font-weight:700;color:#fff;font-size:13px">VEP Splice Consequence Terms — Genomic Range</span>
+      <span class="splice-toggle-icon"></span>
     </summary>
-    <div style="margin-top:10px;overflow-x:auto">
+    <div style="padding:12px;overflow-x:auto">
       <img src="https://github.com/leexgh/splice-region-mutations/blob/main/splice_consequence_terms.png?raw=true"
            alt="VEP Splice Consequence Terms — Genomic Range"
-           style="max-width:100%;border-radius:6px;border:1px solid #334155">
+           style="max-width:100%;border-radius:4px;border:1px solid #334155">
     </div>
   </details>
 
@@ -391,41 +395,41 @@ const TERMS = [
   { term:'rare_amino_acid_variant',   p:9,  band:'Moderate', vc:'Missense_Mutation',      splice:false, note:'Rare amino acid codon changed' },
   // Low
   { term:'splice_donor_5th_base_variant', p:10, band:'Low', vc:'Splice_Region',           splice:false, note:'5th base after start of intron' },
-  { term:'splice_region_variant',     p:10, band:'Low',      vc:'Splice_Region',          splice:true,  note:'1–3 exonic or 3–8 intronic bases from splice site' },
+  { term:'splice_region_variant',     p:10, band:'Low',      vc:'Splice_Region',          splice:false, note:'1–3 exonic or 3–8 intronic bases from splice site' },
   { term:'splice_donor_region_variant', p:10, band:'Low',    vc:'Splice_Region',          splice:false, note:'3rd–6th base after 5′ splice junction' },
-  { term:'splice_polypyrimidine_tract_variant', p:10, band:'Low', vc:'Splice_Region',     splice:false, note:'Polypyrimidine tract at 3′ end of intron' },
-  { term:'synonymous_variant',        p:11, band:'Low',      vc:'Silent',                 splice:false, note:'No amino acid change' },
-  { term:'start_retained_variant',    p:11, band:'Low',      vc:'Silent',                 splice:false, note:'Start codon base changed but start retained' },
-  { term:'stop_retained_variant',     p:11, band:'Low',      vc:'Silent',                 splice:false, note:'Terminator base changed but stop retained' },
-  { term:'incomplete_terminal_codon_variant', p:12, band:'Low', vc:'Silent',              splice:false, note:'Final codon of incomplete transcript changed' },
+  { term:'splice_polypyrimidine_tract_variant', p:11, band:'Low', vc:'Intron',            splice:false, note:'Polypyrimidine tract at 3′ end of intron' },
+  { term:'synonymous_variant',        p:12, band:'Low',      vc:'Silent',                 splice:false, note:'No amino acid change' },
+  { term:'start_retained_variant',    p:12, band:'Low',      vc:'Silent',                 splice:false, note:'Start codon base changed but start retained' },
+  { term:'stop_retained_variant',     p:12, band:'Low',      vc:'Silent',                 splice:false, note:'Terminator base changed but stop retained' },
+  { term:'incomplete_terminal_codon_variant', p:13, band:'Low', vc:'Silent',              splice:false, note:'Final codon of incomplete transcript changed' },
   // Modifier
-  { term:'coding_sequence_variant',   p:13, band:'Modifier', vc:'Missense_Mutation†',     splice:false, note:'Changes coding sequence; may resolve to Frame_Shift or In_Frame' },
-  { term:'mature_mirna_variant',      p:13, band:'Modifier', vc:'RNA',                    splice:false, note:'Located within mature miRNA sequence' },
-  { term:'exon_variant',              p:13, band:'Modifier', vc:'RNA',                    splice:false, note:'Changes exon sequence' },
-  { term:'5_prime_utr_variant',       p:14, band:'Modifier', vc:"5'UTR",                  splice:false, note:"5′ UTR variant" },
-  { term:'5_prime_utr_premature_start_codon_gain_variant', p:14, band:'Modifier', vc:"5'UTR", splice:false, note:'snpEff: start codon gained in 5′ UTR' },
-  { term:'3_prime_utr_variant',       p:14, band:'Modifier', vc:"3'UTR",                  splice:false, note:"3′ UTR variant" },
-  { term:'non_coding_exon_variant',   p:15, band:'Modifier', vc:'RNA',                    splice:false, note:'Changes non-coding exon sequence' },
-  { term:'non_coding_transcript_exon_variant', p:15, band:'Modifier', vc:'RNA',           splice:false, note:'snpEff alias for non_coding_exon_variant' },
-  { term:'non_coding_transcript_variant', p:16, band:'Modifier', vc:'RNA',                splice:false, note:'Non-coding RNA gene transcript variant' },
-  { term:'nc_transcript_variant',     p:16, band:'Modifier', vc:'RNA',                    splice:false, note:'Older alias for non_coding_transcript_variant' },
-  { term:'intron_variant',            p:16, band:'Modifier', vc:'Intron',                 splice:false, note:'Occurring within an intron' },
-  { term:'intragenic_variant',        p:16, band:'Modifier', vc:'Intron',                 splice:false, note:'Within gene but outside all transcript features' },
-  { term:'intragenic',                p:16, band:'Modifier', vc:'Intron',                 splice:false, note:'snpEff alias for intragenic_variant' },
-  { term:'nmd_transcript_variant',    p:17, band:'Modifier', vc:'Silent',                 splice:false, note:'Target of nonsense-mediated decay' },
-  { term:'coding_transcript_variant', p:18, band:'Modifier', vc:'Missense_Mutation',      splice:false, note:'Protein-coding gene transcript variant' },
-  { term:'upstream_gene_variant',     p:19, band:'Modifier', vc:"5'Flank",                splice:false, note:"5′ of gene" },
-  { term:'downstream_gene_variant',   p:19, band:'Modifier', vc:"3'Flank",                splice:false, note:"3′ of gene" },
-  { term:'tfbs_ablation',             p:20, band:'Modifier', vc:'IGR',                    splice:false, note:'Deletion including a TFBS' },
-  { term:'tfbs_amplification',        p:20, band:'Modifier', vc:'IGR',                    splice:false, note:'Amplification including a TFBS' },
-  { term:'tf_binding_site_variant',   p:20, band:'Modifier', vc:'IGR',                    splice:false, note:'Within a transcription factor binding site' },
-  { term:'regulatory_region_ablation', p:20, band:'Modifier', vc:'IGR',                   splice:false, note:'Deletion of a regulatory region' },
-  { term:'regulatory_region_amplification', p:20, band:'Modifier', vc:'IGR',              splice:false, note:'Amplification of a regulatory region' },
-  { term:'regulatory_region_variant', p:20, band:'Modifier', vc:'IGR',                    splice:false, note:'Within a regulatory region' },
-  { term:'regulatory_region',         p:20, band:'Modifier', vc:'IGR',                    splice:false, note:'snpEff alias for regulatory_region_variant' },
-  { term:'intergenic_variant',        p:21, band:'Modifier', vc:'IGR',                    splice:false, note:'Between genes' },
-  { term:'intergenic_region',         p:21, band:'Modifier', vc:'IGR',                    splice:false, note:'snpEff alias for intergenic_variant' },
-  { term:'sequence_variant',          p:21, band:'Modifier', vc:'Sequence_Variant',       splice:false, note:'Non-exact copy of sequence feature' },
+  { term:'coding_sequence_variant',   p:14, band:'Modifier', vc:'Missense_Mutation†',     splice:false, note:'Changes coding sequence; may resolve to Frame_Shift or In_Frame' },
+  { term:'mature_mirna_variant',      p:14, band:'Modifier', vc:'RNA',                    splice:false, note:'Located within mature miRNA sequence' },
+  { term:'exon_variant',              p:14, band:'Modifier', vc:'RNA',                    splice:false, note:'Changes exon sequence' },
+  { term:'5_prime_utr_variant',       p:15, band:'Modifier', vc:"5'UTR",                  splice:false, note:"5′ UTR variant" },
+  { term:'5_prime_utr_premature_start_codon_gain_variant', p:15, band:'Modifier', vc:"5'UTR", splice:false, note:'snpEff: start codon gained in 5′ UTR' },
+  { term:'3_prime_utr_variant',       p:15, band:'Modifier', vc:"3'UTR",                  splice:false, note:"3′ UTR variant" },
+  { term:'non_coding_exon_variant',   p:16, band:'Modifier', vc:'RNA',                    splice:false, note:'Changes non-coding exon sequence' },
+  { term:'non_coding_transcript_exon_variant', p:16, band:'Modifier', vc:'RNA',           splice:false, note:'snpEff alias for non_coding_exon_variant' },
+  { term:'non_coding_transcript_variant', p:17, band:'Modifier', vc:'RNA',                splice:false, note:'Non-coding RNA gene transcript variant' },
+  { term:'nc_transcript_variant',     p:17, band:'Modifier', vc:'RNA',                    splice:false, note:'Older alias for non_coding_transcript_variant' },
+  { term:'intron_variant',            p:17, band:'Modifier', vc:'Intron',                 splice:false, note:'Occurring within an intron' },
+  { term:'intragenic_variant',        p:17, band:'Modifier', vc:'Intron',                 splice:false, note:'Within gene but outside all transcript features' },
+  { term:'intragenic',                p:17, band:'Modifier', vc:'Intron',                 splice:false, note:'snpEff alias for intragenic_variant' },
+  { term:'nmd_transcript_variant',    p:18, band:'Modifier', vc:'Silent',                 splice:false, note:'Target of nonsense-mediated decay' },
+  { term:'coding_transcript_variant', p:19, band:'Modifier', vc:'Missense_Mutation',      splice:false, note:'Protein-coding gene transcript variant' },
+  { term:'upstream_gene_variant',     p:20, band:'Modifier', vc:"5'Flank",                splice:false, note:"5′ of gene" },
+  { term:'downstream_gene_variant',   p:20, band:'Modifier', vc:"3'Flank",                splice:false, note:"3′ of gene" },
+  { term:'tfbs_ablation',             p:21, band:'Modifier', vc:'IGR',                    splice:false, note:'Deletion including a TFBS' },
+  { term:'tfbs_amplification',        p:21, band:'Modifier', vc:'IGR',                    splice:false, note:'Amplification including a TFBS' },
+  { term:'tf_binding_site_variant',   p:21, band:'Modifier', vc:'IGR',                    splice:false, note:'Within a transcription factor binding site' },
+  { term:'regulatory_region_ablation', p:21, band:'Modifier', vc:'IGR',                   splice:false, note:'Deletion of a regulatory region' },
+  { term:'regulatory_region_amplification', p:21, band:'Modifier', vc:'IGR',              splice:false, note:'Amplification of a regulatory region' },
+  { term:'regulatory_region_variant', p:21, band:'Modifier', vc:'IGR',                    splice:false, note:'Within a regulatory region' },
+  { term:'regulatory_region',         p:21, band:'Modifier', vc:'IGR',                    splice:false, note:'snpEff alias for regulatory_region_variant' },
+  { term:'intergenic_variant',        p:22, band:'Modifier', vc:'IGR',                    splice:false, note:'Between genes' },
+  { term:'intergenic_region',         p:22, band:'Modifier', vc:'IGR',                    splice:false, note:'snpEff alias for intergenic_variant' },
+  { term:'sequence_variant',          p:22, band:'Modifier', vc:'Sequence_Variant',       splice:false, note:'Non-exact copy of sequence feature' },
   // Legacy aliases (in VARIANT_MAP but no EFFECT_PRIORITY entry)
   // Source: VariantClassificationResolver.java initVariantMap() lines 201, 244-252
   { term:'splicing',                  p:null, band:'Legacy', vc:'Splice_Region',           splice:false, note:'ANNOVAR/snpEff alias — VariantClassificationResolver.java:244' },
@@ -454,8 +458,8 @@ const PROTEIN_CHANGE = {
   // pPos derived from hgvsc cDNA position: pPos = (cPos + 2) / 3
   'splice_acceptor_variant':  [{ label:'p.X{n}_splice', style:'pc-splice', stageLabel:'Stage 2', tip:'hgvsc → pPos=(cPos+2)/3 → p.X{pPos}_splice (line 137). Stage 1 suppressed: Splice_Site classification.' }],
   'splice_donor_variant':     [{ label:'p.X{n}_splice', style:'pc-splice', stageLabel:'Stage 2', tip:'hgvsc → pPos=(cPos+2)/3 → p.X{pPos}_splice (line 137). Stage 1 suppressed: Splice_Site classification.' }],
-  'splice_region_variant':    [{ label:'p.X{n}_splice', style:'pc-splice', stageLabel:'Stage 2', tip:'hgvsc → pPos=(cPos+2)/3 → p.X{pPos}_splice (line 137). Stage 1 suppressed: Splice_Region classification.' }],
-  'splicing':                 [{ label:'p.X{n}_splice', style:'pc-splice', stageLabel:'Stage 2', tip:'Legacy alias — same logic as splice_region_variant.' }],
+  'splice_region_variant':    [{ label:'p.*{n}*', style:'pc-star', stageLabel:'Stage 2', tip:'Stage 1 suppressed (Splice_Region). Not in SPLICE_SITE_VARIANTS → else-if branch (line 139): amino_acids null → p.*{pPos}* (line 150).' }],
+  'splicing':                 [{ label:'p.*{n}*', style:'pc-star', stageLabel:'Stage 2', tip:'Legacy alias — same logic as splice_region_variant.' }],
 
   // ── Newer VEP 105 splice terms — NOT in SPLICE_SITE_VARIANTS ────────────
   // Classification = Splice_Region → "splice" → Stage 1 suppressed.
