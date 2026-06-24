@@ -120,6 +120,56 @@ def _card_id(r: dict) -> str:
     return f"card-{chrom}-{pos}-{ref}-{alt}"
 
 
+def _hgvsg(r: dict) -> str:
+    """Build hgvsg from MAF-style columns (msk_reference_allele uses '-' for indels)."""
+    chrom = str(r.get('chromosome', '')).replace('chr', '')
+    ref   = str(r.get('msk_reference_allele') or r.get('reference_allele', ''))
+    alt   = str(r.get('msk_variant_allele')   or r.get('variant_allele', ''))
+    start = str(r.get('msk_start_position')   or r.get('start_position', ''))
+    end   = str(r.get('msk_end_position')     or r.get('end_position', start))
+    if not (chrom and start and ref and alt):
+        return ''
+    # SNV
+    if ref != '-' and alt != '-' and len(ref) == 1 and len(alt) == 1:
+        return f"{chrom}:g.{start}{ref}>{alt}"
+    # Insertion: ref = '-'
+    if ref == '-':
+        return f"{chrom}:g.{start}_{int(start)+1}ins{alt}"
+    # Deletion: alt = '-'
+    if alt == '-':
+        return (f"{chrom}:g.{start}del" if start == end
+                else f"{chrom}:g.{start}_{end}del")
+    # Delins / MNP
+    return f"{chrom}:g.{start}_{end}delins{alt}"
+
+
+def _input_sample_links(sample_ids_str: str, uid: str, max_shown: int = 10) -> str:
+    """MSK-IMPACT sample links from the input MAF (all link to mskimpact portal)."""
+    if not sample_ids_str or str(sample_ids_str) in ("", "nan"):
+        return "<span class='muted'>—</span>"
+    samples = [s.strip() for s in str(sample_ids_str).split(",") if s.strip()]
+    links = [
+        f'<a href="https://cbioportal.mskcc.org/patient?sampleId={s}&studyId=mskimpact"'
+        f' target="_blank" class="lnk-msk">{_h(s)}</a>'
+        for s in samples
+    ]
+    if not links:
+        return "<span class='muted'>—</span>"
+    if len(links) <= max_shown:
+        return " ".join(links)
+    shown, hidden = links[:max_shown], links[max_shown:]
+    more_id = f"is-{uid}"
+    return (
+        " ".join(shown)
+        + f'<span id="{more_id}" style="display:none;"> ' + " ".join(hidden) + "</span>"
+        + f' <button class="more-btn"'
+          f' onclick="var e=document.getElementById(\'{more_id}\');'
+          f'e.style.display=e.style.display===\'none\'?\'inline\':\'\';'
+          f'this.textContent=this.textContent===\'+{len(hidden)} more\'?\'show less\':\'+{len(hidden)} more\';">'
+          f'+{len(hidden)} more</button>'
+    )
+
+
 def _cbio_sample_links(sample_ids_str: str, uid: str, max_shown: int = 10) -> str:
     """Generate cBioPortal hyperlinks for each sample_id, with show-more if >max_shown."""
     if not sample_ids_str or str(sample_ids_str) in ("", "nan"):
@@ -240,7 +290,13 @@ def build_card(r: dict) -> str:
     <tr><td>MaxEntScan Δ</td><td>{_format_num(r.get('maxent_delta'), 2)} ({_h(r.get('maxent_status', ''))})</td></tr>
     """
 
+    hgvsg = _hgvsg(r)
+    gn_url = f"https://www.genomenexus.org/variant/{hgvsg}" if hgvsg else ""
+    gn_link = (f'<a href="{gn_url}" target="_blank">{_h(hgvsg)}</a>' if gn_url
+               else "<span class='muted'>—</span>")
+
     clinical_html = f"""
+    <tr><td><b>Genome Nexus</b></td><td>{gn_link}</td></tr>
     <tr><td><b>ClinVar</b></td><td>{_clinvar_link(r.get('clinvar_id'))}: {_h(r.get('clinvar_significance')) or '—'}</td></tr>
     <tr><td>ClinVar review status</td><td>{_h(r.get('clinvar_review_status') or '—')}</td></tr>
     <tr><td>ClinVar PMIDs</td><td>{_pmid_links(r.get('clinvar_pmids', ''))}</td></tr>
@@ -283,8 +339,11 @@ def build_card(r: dict) -> str:
     <tr><td>reVUE PMIDs</td><td>{_pmid_links(r.get('revue_pmids', ''))}</td></tr>
     """
 
+    input_sample_links = _input_sample_links(r.get("input_sample_ids", ""), cid + "i")
+
     cohort_html = f"""
-    <tr><td><b>Input occurrences</b></td><td>{_h(r.get('occurrence_count'))} ({_h(r.get('n_distinct_samples'))} samples)</td></tr>
+    <tr><td><b>IMPACT sample count</b></td><td>{_h(r.get('occurrence_count'))} ({_h(r.get('n_distinct_samples'))} unique)</td></tr>
+    <tr><td>IMPACT samples</td><td class="sample-links">{input_sample_links}</td></tr>
     <tr><td>Cancer types (input MAF)</td><td>{cancers_input}</td></tr>
     <tr><td>Gene</td><td>{_h(r.get('hugo_symbol'))} · OncoKB type {_h(r.get('gene_type_oncokb') or '—')} <span class='muted'>(TSG/oncogene flag only)</span></td></tr>
     <tr><td>reVUE</td><td>{'<b>confirmed</b>' if _bool(r.get('in_revue')) else '—'}</td></tr>
@@ -534,8 +593,8 @@ OncoKB oncogenicity calls and therapy levels shown from input data only (not ind
   <th>SpliceAI Δmax</th><th>gnomAD popmax</th><th>ClinVar</th>
   <th title="Unique samples carrying this variant across MSK-IMPACT + GENIE + TCGA. MSK↔GENIE deduped by patient ID; TCGA patients are added separately. ≥5 triggers the MEDIUM recurrence flag.">cBio N (MSK+GENIE+TCGA)</th>
   <th>reVUE</th>
-  <th title="Occurrences in the input MSK-IMPACT MAF before dedup. One patient can contribute multiple rows from repeat biopsies or timepoints.">Occ count</th>
-  <th title="Occ count divided by cBio total unique samples (MSK+GENIE+TCGA). NA if cBio N = 0.">Occ/Total ratio</th>
+  <th title="Occurrences in the input MSK-IMPACT MAF (one row per sample, before dedup).">IMPACT sample count</th>
+  <th title="IMPACT sample count divided by cBio total unique samples (MSK+GENIE+TCGA). NA if cBio N = 0.">IMPACT/TOTAL</th>
   <th title="OncoKB oncogenicity annotation from input data.">OncoKB Oncogenic</th>
   <th title="OncoKB highest therapeutic level from input data.">OncoKB Level</th>
   <th title="Average mRNA expression z-score across TCGA samples carrying this variant (relative to diploid; negative = reduced expression).">mRNA Z-score (TCGA)</th>
@@ -544,6 +603,16 @@ OncoKB oncogenicity calls and therapy levels shown from input data only (not ind
 <tbody>
 {master_rows}
 </tbody>
+<tfoot>
+<tr>
+  <th></th><th></th><th></th><th></th><th></th>
+  <th></th><th></th><th></th>
+  <th></th>
+  <th></th><th></th>
+  <th></th>
+  <th></th><th></th><th></th>
+</tr>
+</tfoot>
 </table>
 </section>
 
@@ -557,14 +626,42 @@ OncoKB oncogenicity calls and therapy levels shown from input data only (not ind
 <script src="https://cdn.jsdelivr.net/npm/igv@2.15.11/dist/igv.min.js"></script>
 <script>
 $(document).ready(function() {{
-  $('#master-table').DataTable({{
+  // Columns that get a filter input in the footer.
+  // Key = 0-based column index, value = 'num' (text input) or 'select' (dropdown).
+  var filterCols = {{ 8: 'num', 11: 'num', 12: 'select', 13: 'select' }};
+
+  var table = $('#master-table').DataTable({{
     pageLength: 25,
     order: [[0, 'asc'], [8, 'desc']],
     columnDefs: [
-      {{ type: 'num', targets: [5, 6, 8, 10, 14] }},
-      {{ type: 'num', targets: [11] }},
+      {{ type: 'num', targets: [5, 6, 8, 10, 11, 14] }},
       {{ orderable: true, targets: '_all' }}
-    ]
+    ],
+    initComplete: function() {{
+      var api = this.api();
+      api.columns().every(function(idx) {{
+        var col = this;
+        var footer = $(col.footer());
+        if (!(idx in filterCols)) return;
+
+        if (filterCols[idx] === 'select') {{
+          var sel = $('<select style="width:100%;font-size:11px;"><option value="">All</option></select>')
+            .appendTo(footer.empty())
+            .on('change', function() {{
+              col.search($(this).val(), true, false).draw();
+            }});
+          col.data().unique().sort().each(function(d) {{
+            if (d !== '' && d !== null) sel.append('<option value="' + d + '">' + d + '</option>');
+          }});
+        }} else {{
+          $('<input type="text" placeholder="Filter…" style="width:100%;font-size:11px;">')
+            .appendTo(footer.empty())
+            .on('keyup change', function() {{
+              if (col.search() !== this.value) col.search(this.value).draw();
+            }});
+        }}
+      }});
+    }}
   }});
 
   $('#master-table tbody').on('click', 'tr', function() {{

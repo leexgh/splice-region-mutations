@@ -214,6 +214,7 @@ def main() -> int:
                 # Aggregated cohort context:
                 "occurrence_count": sum(bucket["cancer_types"].values()),
                 "n_distinct_samples": len(set(bucket["samples"])),
+                "input_sample_ids": ",".join(sorted(set(s for s in bucket["samples"] if s))),
                 "cancer_types_json": json.dumps(dict(bucket["cancer_types"])),
                 "oncokb_call_input": most_common(bucket["oncokb_calls"]),
                 "oncokb_highest_level_input": most_common(bucket["highest_levels"]),
