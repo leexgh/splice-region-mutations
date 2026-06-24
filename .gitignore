@@ -1,0 +1,20 @@
+# Input data (patient-level MAF, reference genomes)
+data/
+
+# Python virtual environment
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated pipeline output (large caches and intermediates)
+out/cache/
+out/annotated/
+out/unique_variants.tsv
+out/variants_scored.tsv
+
+# The report itself is committed via docs/index.html, not out/
+out/
+
+# macOS
+.DS_Store
